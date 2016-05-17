@@ -16,7 +16,7 @@ NEWSPIDER_MODULE = 'WebAnalysis.spiders'
 
 ITEM_PIPELINES = ['WebAnalysis.pipelines.MongoPipeline']
 MONGO_URI = 'mongodb://localhost:27017/'
-MONGO_DATABASE = 'warehouse_0305'
+MONGO_DATABASE = 'warehouse'
 
 USER_AGENT = 'Speedy Spider (Entireweb; Beta/1.2; http://www.entireweb.com/about/search_tech/speedyspider/)'
 CONCURRENT_REQUESTS_PER_DOMAIN = 16

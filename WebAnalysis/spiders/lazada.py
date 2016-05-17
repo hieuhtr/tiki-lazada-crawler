@@ -5,10 +5,13 @@ from scrapy.spiders import CrawlSpider, Rule
 
 from WebAnalysis.items import WebanalysisItem
 import re
+import pytz
+
 from datetime import datetime
+from pytz import timezone
 
 FILE_PATH = 'lazada_category_links.txt'
-date = datetime.now()
+date = datetime.now(timezone('Asia/Ho_Chi_Minh')).strftime("%Y-%m-%d")
 
 def read_list_from_file(path):
     list_of_start_urls = []
@@ -47,7 +50,7 @@ class LazadaSpider(CrawlSpider):
                   '/index/error/', '/images/core_mobile/l/splash.png', '/catalog/gallery/', '/index/index/', '/ajax/locationtree/getall/',
                   '/viewOrderTracking/', '/ordertrackinghelplink/', '/new-products/', '/special-price/', '/?viewType=listView'],
             process_value=strip_value,
-            restrict_xpaths=['//div[@class="component component-product_list product_list grid    toclear"]']), follow=False, callback='parse_item', process_links=None)        
+            restrict_xpaths=['//div[@class="component component-product_list product_list  grid toclear"]']), follow=False, callback='parse_item', process_links=None)        
 
     )
 
@@ -59,7 +62,7 @@ class LazadaSpider(CrawlSpider):
             i['url_product'] = response.url
             i['website'] = 'Lazada'
             #i['date'] = date
-            i['date'] = '2016-05-15'
+            i['date'] = date
         except Exception:
             return
 
@@ -109,20 +112,24 @@ class LazadaSpider(CrawlSpider):
             i['detail_info'] = ""
 
         try:
-            i['rating'] = response.xpath('//span[@class="ratingNumber"]/text()').extract()[0].strip().encode('UTF-8')
+            rating_info = response.xpath('//span[@class="ratingNumber"]/text()').extract()[0].strip().encode('UTF-8')
+            cut_rating = re.search(r'(\d+(\.\d+)?) ', rating_info)
+            string_rating = "{0:.2f}".format(float(cut_rating.group(1)) / float(5))
+            i['rating'] = float(string_rating)
         except Exception:
-            i['rating'] = ""
+            i['rating'] = 0
 
         try:
-            i['number_of_rating'] = response.xpath('//div[@class="ratingNumberText"]/@content').extract()[0].strip().encode('UTF-8')
+            i['number_of_rating'] = int(response.xpath('//div[@class="ratingNumberText"]/@content').extract()[0].strip().encode('UTF-8'))
         except Exception:
-            i['number_of_rating'] = ""
+            i['number_of_rating'] = 0
 
         try:
             list_of_comment = []
             comment_table = response.xpath('//ul[@id="js_reviews_list"]')
 
             number_of_comment = len(comment_table.xpath('li').extract())
+            i['number_of_comment'] = int(number_of_comment)
             for row in range(1, 6 if number_of_comment > 5 else number_of_comment + 1):
                 comment = {}
                 
@@ -144,8 +151,7 @@ class LazadaSpider(CrawlSpider):
                 i['list_of_comment'] = list_of_comment
         except Exception:
             i['list_of_comment'] = ""
+            i['number_of_comment'] = 0
 
         return i
         
-
-

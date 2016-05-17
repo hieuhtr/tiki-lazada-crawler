@@ -18,6 +18,7 @@ class WebanalysisItem(scrapy.Item):
 	detail_info = scrapy.Field()
 	rating = scrapy.Field()
 	number_of_rating = scrapy.Field()
+	number_of_comment = scrapy.Field()
 	list_of_comment = scrapy.Field()
 	description = scrapy.Field()
 	url_product = scrapy.Field()

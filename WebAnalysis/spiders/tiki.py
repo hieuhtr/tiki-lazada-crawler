@@ -5,10 +5,13 @@ from scrapy.spiders import CrawlSpider, Rule
 
 from WebAnalysis.items import WebanalysisItem
 import re
+import pytz
+
 from datetime import datetime
+from pytz import timezone
 
 FILE_PATH = 'tiki_category_links.txt'
-date = datetime.now()
+date = datetime.now(timezone('Asia/Ho_Chi_Minh')).strftime("%Y-%m-%d")
 
 
 def read_list_from_file(path):
@@ -53,7 +56,7 @@ class TikiSpider(CrawlSpider):
             i['product_id'] = response.xpath('//input[@id="product_id"]/@value').extract()[0].strip().encode('UTF-8')
             i['url_product'] = response.url
             i['website'] = 'Tiki'
-            i['date'] = '2016-05-15'
+            i['date'] = date
         except Exception:
             return
 
@@ -113,21 +116,24 @@ class TikiSpider(CrawlSpider):
             i['detail_info'] = ""
 
         try:
-            i['rating'] = response.xpath('//p[@class="total-review-point"]/text()').extract()[0].strip().encode('UTF-8')
+            rating_info = response.xpath('//p[@class="total-review-point"]/text()').extract()[0].strip().encode('UTF-8')
+            cut_rating = re.search(r'(\d+(\.\d+)?)/', rating_info)
+            i['rating'] = float(cut_rating.group(1)) / float(5)
         except Exception:
-            i['rating'] = ""
+            i['rating'] = 0
 
         try:
             rating_content = response.xpath('//p[@class="comments-count"]/a/text()').extract()[0].strip().encode('UTF-8')
             number_of_rating = re.search(r'\d+', rating_content)
-            i['number_of_rating'] = number_of_rating.group()
+            i['number_of_rating'] = int(number_of_rating.group())
         except Exception:
-            i['number_of_rating'] = ""
+            i['number_of_rating'] = 0
 
         try:
             list_of_comment = []
             comment_table = response.xpath('//div[@id="review-new"]')
             number_of_comment = len(comment_table.xpath('div').extract())
+            i['number_of_comment'] = i['number_of_rating']
             for row in range(1, 6 if number_of_comment > 5 else number_of_comment + 1):
                 comment = {}
                 name = comment_table.xpath('div['+str(row)+']//p[@class="name"]/text()').extract()[0].strip().encode('UTF-8')
@@ -143,8 +149,7 @@ class TikiSpider(CrawlSpider):
                 i['list_of_comment'] = list_of_comment
         except Exception:
             i['list_of_comment'] = ""
-
+            i['number_of_comment'] = 0
 
         return i
-
-#        self.logger.info('A response from %s just arrived!', response.url)
+        
